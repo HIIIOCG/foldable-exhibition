@@ -8,7 +8,7 @@
         </div>
         <div class="three-container">
             <div class="three-canvas" ref="mountPoint"></div>
-            <div class="three-button" v-for="button in  buttons " :key="button.i" :style="{ 'left': button.x + 'px', 'top': button.y + 'px' }" @click.prevent="buttonClick(button)" :class="{ 'three-button_show': button.show }">
+            <div class="three-button" v-for="button in  buttons " :key="button.i" :style="{ 'left': button.x + 'px', 'top': button.y + 'px' }" @click.prevent="buttonClick(button)" :class="{ 'three-button_show': button.show, 'three-button_large': button.large }">
                 <!-- <span class="three-button_hint">
                     {{ button.hint }}
                 </span> -->
@@ -145,7 +145,7 @@ export default {
             vm.log.push('There was an error loading ' + url)
         }
 
-        this.initThreeScene()
+        this.initThreeScene(manager)
         this.loadGLTF(manager)
         this.onResize()
         this.animate()
@@ -158,11 +158,17 @@ export default {
     },
 
     methods: {
-        initThreeScene() {
+        initThreeScene(manager) {
 
 
             this.lastUpdate = Date.now()
             this.scene = new THREE.Scene()
+            let textureLoader = new THREE.TextureLoader(manager)
+            textureLoader.load(require('../assets/env.jpg'), img=>{
+                img.mapping = THREE.EquirectangularRefractionMapping
+                img.encoding = THREE.SRGBColorSpace
+                this.scene.background = img
+            })
 
             this.origin = new THREE.Vector3(0, 0, 0)
 
@@ -247,8 +253,8 @@ export default {
                 this.action.time = 400 / fps
                 this.mixer.update(0)
 
-                let envmaploader = new THREE.PMREMGenerator(this.renderer)
-                let envmap = envmaploader.fromScene(this.scene)
+                let pmremGenerator = new THREE.PMREMGenerator(this.renderer)
+                let envMap = pmremGenerator.fromScene(this.scene)
                 this.camera.position.x = -10
 
                 let objects = [gltfModel]
@@ -267,6 +273,7 @@ export default {
                             obj: buttonObj,
                             hint: button.hint,
                             show: false,
+                            large: false,
                         })
                     }
                 }
@@ -277,7 +284,7 @@ export default {
                 lightStick.material.emissiveIntensity = 100
 
                 let iron = gltfModel.getObjectByName('iron')
-                console.log(iron, envmap)
+                console.log(iron, envMap)
                 iron.material.reflectivity = 0
                 // iron.material.envMap = envmap.texture
 
@@ -294,7 +301,7 @@ export default {
                     if (obj.material) {
 
                         obj.material = new THREE.MeshPhysicalMaterial(obj.material)
-                        obj.material.envMap = envmap.texture
+                        obj.material.envMap = envMap.texture
                         obj.material.envMapIntensity = 0.1
                         // obj.material.roughness = 0.5
                         // obj.material.metalness = 0.9
@@ -408,6 +415,7 @@ export default {
                     button.x = (vector.x + 1) * size.x / 2
                     button.y = (1 - vector.y) * size.y / 2
 
+                    button.large = false
                     button.show = false
 
                     button.time
@@ -420,15 +428,18 @@ export default {
                         let v = new THREE.Vector3()
                         let distance = v.subVectors(this.camera.position, button.obj.position).lengthSq()
 
-                        if (state_progress > 0.8)
+                        if (state_progress > 0.8) {
+
+                            button.show = true
                             if (button_distance == null || distance < button_distance) {
                                 button_to_show = button
                                 button_distance = distance
                             }
+                        }
                     }
                 }
 
-                if (button_to_show !== null) button_to_show.show = true
+                if (button_to_show !== null) button_to_show.large = true
 
                 if (count > 0) {
                     temp_origin.divideScalar(count)
