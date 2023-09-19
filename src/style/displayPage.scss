@@ -1,0 +1,161 @@
+.display {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+
+    .display-container {
+        width: 200vw;
+        height: 200vh;
+        left: 0px;
+        top: 0px;
+
+        transform-origin: left top;
+        transform: scale(0.5);
+
+        font-size: 32px;
+        background-color: black;
+        .menu {
+            max-width: 700px;
+            .menu-item {
+                flex: 1;
+                transition: flex 0.5s;
+                transition-timing-function: cubic-bezier(0.5, 0, 0, 1);
+
+                min-height: 250px;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+
+                background-color: white;
+                border-radius: 60px;
+                padding: 60px 70px 30px;
+
+                p {
+                    margin: 30px 0px;
+                }
+                .menu-body {
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                    transition: opacity 0.5s;
+                    transition-timing-function: cubic-bezier(0.5, 0, 0, 1);
+                    overflow: hidden;
+
+                    hr {
+                        border-top: solid 1px #6b6b6b;
+                        width: 67%;
+                        margin: 20px 0;
+                        box-sizing: border-box;
+                    }
+
+                    .tags {
+                        margin: 0px -10px;
+                        span {
+                            display: inline-block;
+                            padding: 3.5px 12px;
+                            margin: 0px 10px;
+                            box-sizing: border-box;
+                            text-align: center;
+                            height: 50px;
+                            font-size: 24px;
+                            border: solid 1px black;
+                            border-radius: 50px;
+                        }
+                    }
+                }
+                .menu-title {
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: end;
+                    padding-top: 50px;
+                    max-height: 150px;
+                    box-sizing: border-box;
+                }
+
+                &.hidden {
+                    flex: 0.16;
+                    .menu-body {
+                        opacity: 0;
+                    }
+                }
+
+                &:nth-child(2) {
+                    color: #3f3f3f;
+                    background: #b4b4b4;
+                    hr {
+                        border-top: solid 1px #3f3f3f;
+                    }
+                    .menu-title {
+                        color: white;
+                    }
+                    .tags {
+                        span {
+                            border-color: #6b6b6b;
+                        }
+                    }
+                }
+                &:nth-child(3) {
+                    color: #cccccc;
+                    background: #6b6b6b;
+                    .menu-title {
+                        color: white;
+                    }
+                    .tags {
+                        span {
+                            border-color: #bcbcbc;
+                        }
+                    }
+                }
+            }
+
+            .spec {
+                h3 {
+                    opacity: 0.75;
+                }
+                p {
+                    margin: 0;
+                    font-size: 48px;
+                }
+                margin-right: 120px;
+            }
+        }
+
+        .images {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 60px;
+            .image {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 400;
+            line-height: 1.46;
+            margin: 0;
+        }
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+        }
+        h3 {
+            font-size: 32px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        p {
+            margin: 0;
+        }
+    }
+}
