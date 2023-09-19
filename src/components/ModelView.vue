@@ -1,17 +1,17 @@
 <template>
-    <div>
+    <div class="three">
         <!-- <span>Collapse: </span>
         <input type="range" min="0" max="1" step="0.01" v-model="collapse">
         <span>{{ collapse }}</span> -->
-
-
-
+        <div class="loading" :class="{ complete: complete }">
+            <p v-for="l, i in log.slice(0, showlog)" :key="i">{{ l }}</p>
+        </div>
         <div class="three-container">
             <div class="three-canvas" ref="mountPoint"></div>
             <div class="three-button" v-for="button in  buttons " :key="button.i" :style="{ 'left': button.x + 'px', 'top': button.y + 'px' }" @click.prevent="buttonClick(button)" :class="{ 'three-button_show': button.show }">
-                <span class="three-button_hint">
+                <!-- <span class="three-button_hint">
                     {{ button.hint }}
-                </span>
+                </span> -->
             </div>
         </div>
     </div>
@@ -45,20 +45,27 @@ const states = [
         frame: 100,
 
         buttons: [
-            { hint: 'Wall', name: 'Button0021', goto: 2 },
-            { hint: 'Wall', name: 'Button0022', goto: 2 }
+            { hint: 'Wall', name: 'Button002001', goto: 2 },
+            { hint: 'Wall', name: 'Button002002', goto: 2 }
         ]
     }, { // 2
         frame: 200,
 
         buttons: [
-            { hint: 'Poster', name: 'Button003', goto: 3 }
+            { hint: 'Poster', name: 'Button003001', goto: 3 },
+            { hint: 'Poster', name: 'Button003002', goto: 3 },
+            { hint: 'Poster', name: 'Button003003', goto: 3 },
+            { hint: 'Poster', name: 'Button003004', goto: 3 },
         ]
     }, { // 3
         frame: 300,
 
         buttons: [
-            { hint: 'Table & TV', name: 'Button004', goto: 4 }
+            { hint: 'Table & TV', name: 'Button004001', goto: 4 },
+            { hint: 'Table & TV', name: 'Button004002', goto: 4 },
+            { hint: 'Table & TV', name: 'Button004003', goto: 4 },
+            { hint: 'Table & TV', name: 'Button004004', goto: 4 },
+            { hint: 'Table & TV', name: 'Button004005', goto: 4 },
         ]
     }, { // 4
         frame: 400,
@@ -101,12 +108,45 @@ export default {
 
             currentStateId: 0,
             showStateId: null,
+
+            log: [],
+            complete: false,
+            showlog: 0,
         }
     },
 
     mounted() {
+
+        let vm = this
+
+        const manager = new THREE.LoadingManager()
+
+        manager.onStart = function (url, itemsLoaded, itemsTotal) {
+            console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
+            url = url.replace(/^.*[\\/]/, '').toUpperCase()
+            vm.log.push('Loading application... ' + url + ' (' + itemsLoaded + ' of ' + itemsTotal + ')')
+        }
+
+        manager.onLoad = function () {
+            console.log('Loading complete!')
+            vm.log.push('Loading complete.')
+            vm.complete = true
+        }
+
+        manager.onProgress = function (url, itemsLoaded, itemsTotal) {
+            console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.')
+            url = url.replace(/^.*[\\/]/, '').toUpperCase()
+            vm.log.push('Loading file... ' + url + '  (' + itemsLoaded + ' of ' + itemsTotal + ')')
+        }
+
+        manager.onError = function (url) {
+            console.log('There was an error loading ' + url)
+            url = url.replace(/^.*[\\/]/, '').toUpperCase()
+            vm.log.push('There was an error loading ' + url)
+        }
+
         this.initThreeScene()
-        this.loadGLTF()
+        this.loadGLTF(manager)
         this.onResize()
         this.animate()
         addEventListener('resize', this.onResize)
@@ -119,6 +159,8 @@ export default {
 
     methods: {
         initThreeScene() {
+
+
             this.lastUpdate = Date.now()
             this.scene = new THREE.Scene()
 
@@ -130,14 +172,22 @@ export default {
             this.renderer = new THREE.WebGLRenderer({ antialias: true })
             this.renderer.setClearColor(0xffffff, 0)
 
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+            this.renderer.toneMappingExposure = 1.2
+
+            // this.renderer.shadowMap.enabled = true
+            // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
             this.renderer.setSize(width, height)
             this.$refs.mountPoint.appendChild(this.renderer.domElement)
 
 
-            // Camera
-            this.camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000)
-            this.camera.position.z = 10
 
+            // Camera
+            this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
+            this.camera.position.x = -0.5439065
+            this.camera.position.y = 1.17826265
+            this.camera.position.z = -1.4286829
 
 
             // Orbit control
@@ -151,8 +201,14 @@ export default {
             const ambientLight = new THREE.AmbientLight(0xffffff)
             this.scene.add(ambientLight)
 
-            const pointLight = new THREE.PointLight(0xffffff, 1)
-            pointLight.position.set(2, 2, 2)
+            const pointLight = new THREE.DirectionalLight(0xffffff, 1)
+            pointLight.position.set(-0.2, 1, 0.2)
+            pointLight.intensity = 2
+            pointLight.castShadow = true
+            pointLight.shadow.mapSize.width = 512 // default
+            pointLight.shadow.mapSize.height = 512 // default
+            pointLight.shadow.camera.near = 0.1 // default
+            pointLight.shadow.camera.far = 10 // default
             this.scene.add(pointLight)
 
             // Adding a dummy cube object for rendering testing
@@ -170,13 +226,15 @@ export default {
         onResize() {
             this.resize(window.innerWidth, window.innerHeight)
         },
-        loadGLTF() {
-            const loader = new GLTFLoader()
+        loadGLTF(manager) {
+            const loader = new GLTFLoader(manager)
             this.raw_mesh = []
 
-            loader.load(require('../../../Blend File/exhition04.glb').default, (gltf) => {
+            loader.load(require('../../../Blend File/exhition05.glb').default, (gltf) => {
                 let gltfModel = gltf.scene
                 this.scene.add(gltfModel)
+
+
 
                 // Here, you can manipulate the shape keys (morph targets)
                 // For example, to set the influence of the first shape key:
@@ -185,6 +243,13 @@ export default {
                 this.mixer = new THREE.AnimationMixer(gltfModel)
                 this.action = this.mixer.clipAction(gltf.animations[0])
                 this.action.play()
+
+                this.action.time = 400 / fps
+                this.mixer.update(0)
+
+                let envmaploader = new THREE.PMREMGenerator(this.renderer)
+                let envmap = envmaploader.fromScene(this.scene)
+                this.camera.position.x = -10
 
                 let objects = [gltfModel]
 
@@ -207,10 +272,36 @@ export default {
                 }
                 this.buttons = temp_buttons
 
+                let lightStick = gltfModel.getObjectByName('lightstick')
+                console.log(lightStick)
+                lightStick.material.emissiveIntensity = 100
+
+                let iron = gltfModel.getObjectByName('iron')
+                console.log(iron, envmap)
+                iron.material.reflectivity = 0
+                // iron.material.envMap = envmap.texture
+
+                gltfModel.getObjectByName('iron').castShadow = true
+                gltfModel.getObjectByName('base').castShadow = true
+                gltfModel.getObjectByName('base').receiveShadow = true
+                gltfModel.getObjectByName('waveboard').castShadow = true
+                gltfModel.getObjectByName('waveboard').receiveShadow = true
+
                 while (objects.length > 0) {
                     let obj = objects.pop()
                     obj.frustumCulled = false
 
+                    if (obj.material) {
+
+                        obj.material = new THREE.MeshPhysicalMaterial(obj.material)
+                        obj.material.envMap = envmap.texture
+                        obj.material.envMapIntensity = 0.1
+                        // obj.material.roughness = 0.5
+                        // obj.material.metalness = 0.9
+                        // obj.material.reflectivity = 0.0
+                        obj.material.clearcoat = 1.0
+                        obj.material.clearcoatRoughness = 1.0
+                    }
 
                     // Gather Shape Keys (Deprecated)
                     if (obj.children) objects.push(...obj.children)
@@ -220,7 +311,7 @@ export default {
 
 
                     // Handle Model Specific setting
-                    if (obj.name == 'Plane') {
+                    if (obj.name == 'BG') {
                         obj.parent.remove(obj)
                     }
 
@@ -235,6 +326,8 @@ export default {
             })
         },
         animate() {
+            if (this.showlog < this.log.length) this.showlog += 1
+
             this.animationFrameID = requestAnimationFrame(this.animate)
             let now = Date.now()
             let deltaTime = (now - this.lastUpdate) / 1000
@@ -243,7 +336,6 @@ export default {
             if (this.time > duration) {
                 this.time = this.time - duration
             }
-
 
             let stop_time = states[this.currentStateId].time
             let last_state_id = this.currentStateId - 1
@@ -258,7 +350,7 @@ export default {
             if (relative_time < 0) relative_time += duration
 
             let state_progress = relative_time / state_duration
-            console.log(state_progress, relative_time, state_duration)
+            // console.log(state_progress, relative_time, state_duration)
 
 
 
@@ -278,7 +370,7 @@ export default {
             }
 
 
-            limitDistance(this.controls.target, 1, this.origin, deltaTime)
+            limitDistance(this.controls.target, 3.5, this.origin, deltaTime)
             limitDistance(this.camera.position, 10, this.origin, deltaTime)
 
 
@@ -320,7 +412,7 @@ export default {
 
                     button.time
 
-                    if (button.display == this.currentStateId && state_progress > 0.8) {
+                    if (button.display == this.currentStateId) {
 
                         temp_origin.add(button.obj.position)
                         count += 1
@@ -328,10 +420,11 @@ export default {
                         let v = new THREE.Vector3()
                         let distance = v.subVectors(this.camera.position, button.obj.position).lengthSq()
 
-                        if (button_distance == null || distance < button_distance) {
-                            button_to_show = button
-                            button_distance = distance
-                        }
+                        if (state_progress > 0.8)
+                            if (button_distance == null || distance < button_distance) {
+                                button_to_show = button
+                                button_distance = distance
+                            }
                     }
                 }
 

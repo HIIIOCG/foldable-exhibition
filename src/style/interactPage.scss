@@ -9,6 +9,27 @@
         // z-index: -1;
     }
 
+    .loading {
+        font-family: monospace;
+        position: fixed;
+        display: block;
+        z-index: 2;
+        font-size: 16px;
+        transform: scale(0.5);
+        transform-origin: left bottom;
+        opacity: 0.6;
+        left: 30px;
+        bottom: 30px;
+        p {
+            margin: 1px 0;
+        }
+        transition: opacity 0.5s;
+
+        &.complete{
+            opacity: 0;
+        }
+    }
+
     &-button {
         cursor: pointer;
         position: absolute;
